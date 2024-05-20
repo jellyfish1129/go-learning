@@ -10,11 +10,11 @@ import (
 
 // ITaskRepository is an interface for task repository operations.
 type ITaskRepository interface {
-	GetAllTasks(tasks *[]model.Task, userID uint) error
-	GetTaskByID(task *model.Task, userID uint, taskID uint) error
+	GetAllTasks(tasks *[]model.Task, userId uint) error
+	GetTaskById(task *model.Task, userId uint, taskId uint) error
 	CreateTask(task *model.Task) error
-	UpdateTask(task *model.Task, userID uint, taskID uint) error
-	DeleteTask(userID uint, taskID uint) error
+	UpdateTask(task *model.Task, userId uint, taskId uint) error
+	DeleteTask(userId uint, taskId uint) error
 }
 
 type taskRepository struct {
@@ -26,15 +26,15 @@ func NewTaskRepository(db *gorm.DB) ITaskRepository {
 	return &taskRepository{db}
 }
 
-func (tr *taskRepository) GetAllTasks(tasks *[]model.Task, userID uint) error {
-	if err := tr.db.Joins("User").Where("user_id = ?", userID).Order("created_at").Find(tasks).Error; err != nil {
+func (tr *taskRepository) GetAllTasks(tasks *[]model.Task, userId uint) error {
+	if err := tr.db.Joins("User").Where("user_Id = ?", userId).Order("created_at").Find(tasks).Error; err != nil {
 		return err
 	}
 	return nil
 }
 
-func (tr *taskRepository) GetTaskByID(task *model.Task, userID uint, taskID uint) error {
-	if err := tr.db.Joins("User").Where("user_id = ?", userID).First(task, taskID).Error; err != nil {
+func (tr *taskRepository) GetTaskById(task *model.Task, userId uint, taskId uint) error {
+	if err := tr.db.Joins("User").Where("user_Id = ?", userId).First(task, taskId).Error; err != nil {
 		return err
 	}
 	return nil
@@ -47,8 +47,8 @@ func (tr *taskRepository) CreateTask(task *model.Task) error {
 	return nil
 }
 
-func (tr *taskRepository) UpdateTask(task *model.Task, userID uint, taskID uint) error {
-	result := tr.db.Model(task).Clauses(clause.Returning{}).Where("id=? AND use_id=?", taskID, userID).Update("title", task.Title)
+func (tr *taskRepository) UpdateTask(task *model.Task, userId uint, taskId uint) error {
+	result := tr.db.Model(task).Clauses(clause.Returning{}).Where("Id=? AND user_Id=?", taskId, userId).Update("title", task.Title)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -58,8 +58,8 @@ func (tr *taskRepository) UpdateTask(task *model.Task, userID uint, taskID uint)
 	return nil
 }
 
-func (tr *taskRepository) DeleteTask(userID uint, taskID uint) error {
-	result := tr.db.Where("id=? AND user_id=?", taskID, userID).Delete(&model.Task{})
+func (tr *taskRepository) DeleteTask(userId uint, taskId uint) error {
+	result := tr.db.Where("Id=? AND user_Id=?", taskId, userId).Delete(&model.Task{})
 	if result.Error != nil {
 		return result.Error
 	}
