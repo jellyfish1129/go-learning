@@ -30,10 +30,23 @@ func (uc *userController) SignUp(c echo.Context) error {
 	if err := c.Bind(&user); err != nil { //Bindメソッドはecho特有
 		return c.JSON(http.StatusBadRequest, err.Error()) //JSONメソッドもecho特有、第二引数はinterface型で何でも受け取れる
 	}
+	userRes, err := uc.uu.Signup(user)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	return c.JSON(http.StatusCreated, userRes)
+}
+func (uc *userController) LogIn(c echo.Context) error {
+	user := model.User{}
+	if err := c.Bind(&user); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
 	tokenString, err := uc.uu.Login(user)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
+	// https://go.dev/src/net/http/cookie.go ここにCookieの実装内容が書いてある
 	cookie := new(http.Cookie)
 	cookie.Name = "token"
 	cookie.Value = tokenString
@@ -42,8 +55,21 @@ func (uc *userController) SignUp(c echo.Context) error {
 	cookie.Domain = os.Getenv("API_DOMAIN")
 	// cookie.Secure = true
 	cookie.HttpOnly = true
+	cookie.SameSite = http.SameSiteNoneMode // クロスサイトリクエストでもクッキーを送信するが、HTTPSのみ
+	c.SetCookie(cookie)                     // cookieの内容をHTTP Responseにセット
+	return c.NoContent(http.StatusOK)
+}
+
+func (uc *userController) LogOut(c echo.Context) error {
+	cookie := new(http.Cookie)
+	cookie.Name = "token"
+	cookie.Value = ""
+	cookie.Expires = time.Now()
+	cookie.Path = "/"
+	cookie.Domain = os.Getenv("API_DOMAIN")
+	// cookie.Secure = true
+	cookie.HttpOnly = true
 	cookie.SameSite = http.SameSiteNoneMode
 	c.SetCookie(cookie)
 	return c.NoContent(http.StatusOK)
-
 }
