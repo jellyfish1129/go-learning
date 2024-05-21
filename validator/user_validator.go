@@ -2,6 +2,7 @@ package validator
 
 import (
 	"go-rest-api/model"
+
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 )
@@ -27,7 +28,7 @@ func (uv *userValidator) UserValidate(user model.User) error {
 		validation.Field(
 			&user.Password,
 			validation.Required.Error("password is required"),
-			validation.RuneLength(6, 30).Error("limited 6-30 chars")
+			validation.RuneLength(6, 30).Error("limited 6-30 chars"),
 		),
 	)
 }
